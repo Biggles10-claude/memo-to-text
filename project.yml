@@ -46,7 +46,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: uk.biggle.apps.memo-to-text
         MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "3"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Memo to Text records your voice on this device so it can transcribe the audio locally.
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Memo to Text transcribes recordings on this device. Audio never leaves the phone.
