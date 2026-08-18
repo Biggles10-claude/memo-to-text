@@ -63,26 +63,27 @@ final class SpeechTranscriber: ObservableObject {
 
         return await withCheckedContinuation { (cont: CheckedContinuation<( [TranscriptSegment], String?), Never>) in
             let gate = ResumeGate<( [TranscriptSegment], String?)>(cont)
-            _ = recognizer.recognitionTask(with: request) { [weak self] result, error in
+            _ = recognizer.recognitionTask(with: request) { result, error in
                 if let result, result.isFinal {
-                    let segs = Self.segments(from: result)
+                    let segs = SpeechTranscriber.segments(from: result)
                     Task { @MainActor in
-                        self?.progress = 1
+                        self.progress = 1
                     }
                     gate.resume((segs, nil))
                     return
                 }
                 if let error {
+                    let message = error.localizedDescription
                     Task { @MainActor in
-                        self?.lastError = error.localizedDescription
+                        self.lastError = message
                     }
-                    gate.resume(([], error.localizedDescription))
+                    gate.resume(([], message))
                 }
             }
         }
     }
 
-    static func segments(from result: SFSpeechRecognitionResult) -> [TranscriptSegment] {
+    nonisolated static func segments(from result: SFSpeechRecognitionResult) -> [TranscriptSegment] {
         let pieces = result.bestTranscription.segments
         if pieces.isEmpty {
             let text = result.bestTranscription.formattedString.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -100,7 +101,7 @@ final class SpeechTranscriber: ObservableObject {
 }
 
 /// Prevents double-resume of a checked continuation (Swift SIGTRAP).
-private final class ResumeGate<T>: @unchecked Sendable {
+private final class ResumeGate<T: Sendable>: @unchecked Sendable {
     private let lock = NSLock()
     private var continuation: CheckedContinuation<T, Never>?
 
@@ -108,7 +109,7 @@ private final class ResumeGate<T>: @unchecked Sendable {
         self.continuation = continuation
     }
 
-    func resume(_ value: T) {
+    func resume(_ value: sending T) {
         lock.lock()
         let cont = continuation
         continuation = nil
