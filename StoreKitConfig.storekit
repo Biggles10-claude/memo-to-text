@@ -1,0 +1,29 @@
+{
+  "identifier" : "0F0E0D0C-0B0A-0908-0706-050403020100",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "3.99",
+      "familyShareable" : true,
+      "internalID" : "00000001-0001-0001-0001-000000000001",
+      "localizations" : [
+        {
+          "description" : "Unlocks the full app, forever.",
+          "displayName" : "Full Unlock",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "example.foundry.template.unlock",
+      "referenceName" : "Full Unlock",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

@@ -1,0 +1,7 @@
+# Local SwiftPM / xcodegen debris — do not ship to the CM clone
+.build/
+.swiftpm/
+*.xcodeproj/
+DerivedData/
+*.xcuserstate
+.DS_Store

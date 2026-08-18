@@ -1,0 +1,28 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Buy %@" : {},
+    "Could not load products. Check your connection and try again." : {},
+    "Data" : {},
+    "Family Sharing supported." : {},
+    "Full version unlocked" : {},
+    "Help" : {},
+    "Loading price…" : {},
+    "Nothing here yet" : {},
+    "One purchase unlocks the full app on all your devices. No subscription, no account." : {},
+    "Privacy Policy" : {},
+    "Purchases" : {},
+    "Restore did not complete. Try again later." : {},
+    "Restore Purchases" : {},
+    "Settings" : {},
+    "Stays on this device" : {},
+    "Support" : {},
+    "The purchase could not be completed. You have not been charged." : {},
+    "Try Again" : {},
+    "Unlock" : {},
+    "Unlock Everything" : {},
+    "Version" : {},
+    "Your content appears here after the first action." : {}
+  },
+  "version" : "1.0"
+}

@@ -1,0 +1,135 @@
+# Codemagic CI for Memo to Text
+# (foundry slug: memo-to-text)
+#
+#   • ios-test    — xcodegen + xcodebuild test (unsigned)
+#   • ios-device  — development sign for Legion USB install
+#   • ios-release — App Store sign + IPA
+
+workflows:
+  ios-test:
+    name: Memo to Text — build & test (unsigned)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+    scripts:
+      - name: Generate the Xcode project (xcodegen)
+        script: |
+          set -euo pipefail
+          which xcodegen >/dev/null 2>&1 || brew install xcodegen
+          command -v xcodegen
+          xcodegen --version
+          xcodegen generate
+
+      - name: Build & unit/UI test on the iPhone simulator
+        script: |
+          set -euo pipefail
+          DEVICE="iPhone 16 Pro"
+          xcrun simctl list devices available | grep -q "$DEVICE" || \
+            DEVICE=$(xcrun simctl list devices available | grep -oE 'iPhone[^(]*' | head -1 | sed 's/ *$//')
+          echo "Using simulator: $DEVICE"
+          xcodebuild \
+            -project "memo-to-text.xcodeproj" \
+            -scheme "memo-to-text" \
+            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -resultBundlePath build/test-results.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            clean test | xcbeautify
+    artifacts:
+      - $CM_BUILD_DIR/build/test-results.xcresult
+      - $CM_BUILD_DIR/**/*.log
+
+  ios-device:
+    name: Memo to Text — development IPA for USB install
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+      groups:
+        - code_signing
+      vars:
+        BUNDLE_ID: "uk.biggle.apps.memo-to-text"
+        FOUNDRY_APP_SLUG: "memo-to-text"
+    scripts:
+      - name: Generate the Xcode project (xcodegen)
+        script: |
+          set -euo pipefail
+          which xcodegen >/dev/null 2>&1 || brew install xcodegen
+          command -v xcodegen
+          xcodegen --version
+          xcodegen generate
+
+      - name: Set up development code signing
+        script: |
+          set -euo pipefail
+          keychain initialize
+          if [ -n "${FOUNDRY_DEVICE_UDID:-}" ]; then
+            app-store-connect devices register \
+              "Justins-iPhone" \
+              "$FOUNDRY_DEVICE_UDID" \
+              --platform IOS || true
+          fi
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_DEVELOPMENT \
+            --certificate-key="@env:CERTIFICATE_PRIVATE_KEY" \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Archive & sign (development)
+        script: |
+          set -euo pipefail
+          xcodebuild -resolvePackageDependencies -project memo-to-text.xcodeproj -scheme memo-to-text
+          xcode-project build-ipa \
+            --project "memo-to-text.xcodeproj" \
+            --scheme "memo-to-text"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $CM_BUILD_DIR/**/*.log
+
+  ios-release:
+    name: Memo to Text — sign / archive (App Store)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+      groups:
+        - code_signing
+      vars:
+        BUNDLE_ID: "uk.biggle.apps.memo-to-text"
+        FOUNDRY_APP_SLUG: "memo-to-text"
+    scripts:
+      - name: Generate the Xcode project (xcodegen)
+        script: |
+          set -euo pipefail
+          which xcodegen >/dev/null 2>&1 || brew install xcodegen
+          command -v xcodegen
+          xcodegen --version
+          xcodegen generate
+
+      - name: Set up App Store code signing
+        script: |
+          set -euo pipefail
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key="@env:CERTIFICATE_PRIVATE_KEY" \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Archive & sign (App Store distribution)
+        script: |
+          set -euo pipefail
+          xcode-project build-ipa \
+            --project "memo-to-text.xcodeproj" \
+            --scheme "memo-to-text"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $CM_BUILD_DIR/**/*.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true

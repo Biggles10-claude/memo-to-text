@@ -1,0 +1,81 @@
+# House template t1 — XcodeGen project spec (PRD M6).
+#
+# The .xcodeproj is generated in CI at Phase 2 (`xcodegen generate`); the repo
+# stays XML-free and merge-friendly. `name` and bundle ids are rewritten by
+# the codegen harness at instantiation; the values below keep the bare
+# template valid for the hand-audit.
+name: memo-to-text
+options:
+  bundleIdPrefix: uk.biggle.apps
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  xcodeVersion: "26.0"
+
+packages:
+  Core:
+    path: Core
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1" # iPhone-first; iPad only if the spec says so
+    GENERATE_INFOPLIST_FILE: false
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  App:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/App
+    dependencies:
+      - package: Core
+        product: Core
+    info:
+      path: Support/Info.plist
+      properties:
+        CFBundleDisplayName: Memo to Text
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uk.biggle.apps.memo-to-text
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  AppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/AppTests
+    dependencies:
+      - target: App
+
+  AppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: App
+
+# Shared scheme named after the app slug so CI resolves
+# -project memo-to-text.xcodeproj -scheme memo-to-text
+schemes:
+  memo-to-text:
+    build:
+      targets:
+        App: all
+    test:
+      config: Debug
+      targets:
+        - AppTests
+        - AppUITests
+    run:
+      config: Debug
+    archive:
+      config: Release
